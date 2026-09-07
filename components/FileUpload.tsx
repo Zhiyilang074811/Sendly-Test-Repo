@@ -56,7 +56,8 @@ export function FileUpload({
   const previews = useMemo(() => {
     const previewMap = new Map<File, string>();
     selectedFiles.forEach((file, index) => {
-      const url = hookPreviews[index];
+      const preview = hookPreviews[index];
+      const url = preview?.url;
       if (url && file.type.startsWith('image/')) {
         previewMap.set(file, url);
       }

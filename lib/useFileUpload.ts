@@ -24,7 +24,7 @@ export interface UseFileUploadOptions {
 export interface UseFileUploadReturn {
   file: File | null;
   selectedFiles: File[];
-  previews: string[];
+  previews: Array<{ file: File; url: string }>;
   isUploading: boolean;
   message: string | null;
   error: string | null;
@@ -94,7 +94,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [previews, setPreviews] = useState<Array<{ file: File; url: string }>>([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadingRef = useRef(false);
@@ -105,7 +105,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
   const file = selectedFiles[0] ?? null;
 
   useEffect(() => {
-    previewsRef.current = previews;
+    previewsRef.current = previews.map((p) => p.url);
   }, [previews]);
 
   useEffect(() => {
@@ -127,7 +127,8 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     uploadInFlightRef.current = false;
     setSelectedFiles([]);
     setPreviews((prev) => {
-      prev.forEach((url) => {
+      prev.forEach((preview) => {
+        const url = preview.url;
         if (url) {
           URL.revokeObjectURL(url);
         }
@@ -170,13 +171,11 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     });
     previewsRef.current = [];
     setSelectedFiles(files);
-    const newPreviews = files.map((file) => {
-      if (file.type.startsWith('image/')) {
-        return URL.createObjectURL(file);
-      }
-      return '';
-    });
-    previewsRef.current = newPreviews;
+    const newPreviews = files.map((file) => ({
+      file,
+      url: file.type.startsWith('image/') ? URL.createObjectURL(file) : '',
+    }));
+    previewsRef.current = newPreviews.map((p) => p.url);
     setPreviews(newPreviews);
     setMessage(null);
     setError(null);
@@ -223,10 +222,8 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       previewsRef.current = [];
 
       const newPreviews = validFiles.map((file) => {
-        if (file.type.startsWith('image/')) {
-          return URL.createObjectURL(file);
-        }
-        return '';
+        const url = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+        return { file, url };
       });
 
       setSelectedFiles(validFiles);
@@ -236,11 +233,11 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
           : null,
       );
 
-      previewsRef.current = newPreviews;
+      previewsRef.current = newPreviews.map((p) => p.url);
       setPreviews(newPreviews);
       onFilesSelected?.(validFiles);
     },
-    [accept, clearSelection, emptySelectionMessage, maxSizeMB, onFilesSelected],
+    [accept, clearSelection, emptySelectionMessage, isAcceptedFile, maxSizeMB, onFilesSelected],
   );
 
   const handleFileChange = useCallback(
