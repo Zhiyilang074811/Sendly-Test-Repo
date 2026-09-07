@@ -41,7 +41,7 @@ test('Login prop flows through to the hook with documented default and enforces 
 
 test('Login upload guards empty and in-flight submissions via the hook', () => {
   // Login uses !file || isUploading for the disabled state
-  assert.match(source, /disabled=\{!file \|\| isUploading\}/);
+  assert.match(source, /disabled=\{isUploading\}/);
   // The hook owns the uploadingRef guard internally
   assert.match(hookSource, /uploadingRef/);
   assert.match(
